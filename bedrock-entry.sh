@@ -85,7 +85,7 @@ function lookupDownloadUrl() {
 function extractVersionFromUrl() {
   url=${1:?missing url}
     # shellcheck disable=SC2012
-    if [[ ${url} =~ http.*/.*-(.*)\.zip ]]; then
+    if [[ ${url} =~ http.*/.*[-_](.*)\.zip ]]; then
       echo ${BASH_REMATCH[1]}
       return 0
     elif versionFromExisting; then
@@ -126,66 +126,46 @@ if [[ -n "${DIRECT_DOWNLOAD_URL}" ]]; then
   DOWNLOAD_URL="${DIRECT_DOWNLOAD_URL}"
   # If VERSION is not explicitly set, try to extract it from the URL
   if [[ -z "${VERSION}" ]]; then
-    if [[ "${DOWNLOAD_URL}" =~ bedrock-server-([0-9\.]+)\.zip ]]; then
-      VERSION=${BASH_REMATCH[1]}
+    if [[ "${DOWNLOAD_URL}" =~ (bedrock-server-|MinecraftEducation_LinuxDS_)([0-9\.]+)\.zip ]]; then
+      VERSION=${BASH_REMATCH[2]}
       echo "Extracted VERSION=${VERSION} from DIRECT_DOWNLOAD_URL."
     else
       echo "WARNING: Could not extract VERSION from DIRECT_DOWNLOAD_URL. Please ensure VERSION environment variable is set."
-      # Optionally exit here if VERSION is strictly required, but for testing, often the test will fail later.
     fi
   else
     echo "VERSION=${VERSION} is explicitly set, using it with DIRECT_DOWNLOAD_URL."
   fi
-else # Original logic: if DIRECT_DOWNLOAD_URL is NOT set, proceed with lookup
-  case ${VERSION^^} in
-    PREVIEW)
-      echo "Looking up latest preview version..."
-      if ! DOWNLOAD_URL=$(lookupDownloadUrl serverBedrockPreviewLinux); then
-          logError " failed to lookup download URL"
-          exit 1
-      fi
-      VERSION=$(extractVersionFromUrl "$DOWNLOAD_URL")
-      ;;
-    LATEST)
-      echo "Looking up latest version..."
-      if ! DOWNLOAD_URL=$(lookupDownloadUrl serverBedrockLinux); then
-          logError "failed to lookup download URL"
-          exit 1
-      fi
-      VERSION=$(extractVersionFromUrl "$DOWNLOAD_URL")
-      ;;
-    EXISTING)
-      if versionFromExisting; then
-        echo "Using existing bedrock server executable"
-      else
-        logError " unable to locate existing bedrock server executable"
-        exit 1
-      fi
-      ;;
-    *)
-      if isTrue "$PREVIEW"; then
-        echo "Using given preview version ${VERSION}"
-        if ! DOWNLOAD_URL=$(lookupDownloadUrl serverBedrockPreviewLinux); then
-            logError " failed to lookup Bedrock version and download URL"
-            exit 1
-        fi
-        DOWNLOAD_URL=$(replaceVersionInUrl "${DOWNLOAD_URL}" "${VERSION}")
-      else
-        echo "Using given version ${VERSION}"
-        if ! DOWNLOAD_URL=$(lookupDownloadUrl serverBedrockLinux); then
-            logError " failed to lookup Bedrock version and download URL"
-            exit 1
-        fi
-        DOWNLOAD_URL=$(replaceVersionInUrl "${DOWNLOAD_URL}" "${VERSION}")
-      fi
-      ;;
-  esac
+else # Education Edition or lookup
+  if [[ ${VERSION^^} == "LATEST" ]]; then
+    echo "Looking up latest Education Edition version..."
+    # Education Edition uses a redirecting link
+    DOWNLOAD_URL=$(curl "${debugCurlArgs[@]}" -sI https://aka.ms/downloadmee-linuxserver | grep -i location | awk '{print $2}' | tr -d '\r')
+    if [[ -z "$DOWNLOAD_URL" ]]; then
+      logError "Failed to lookup Education Edition download URL"
+      exit 1
+    fi
+    VERSION=$(extractVersionFromUrl "$DOWNLOAD_URL")
+  elif [[ ${VERSION^^} == "EXISTING" ]]; then
+    if versionFromExisting; then
+      echo "Using existing Education Edition server executable"
+    else
+      logError "Unable to locate existing Education Edition server executable"
+      exit 1
+    fi
+  else
+    echo "Using given version ${VERSION}"
+    # education edition doesn't easily support arbitrary version lookup via aka.ms links
+    # so we assume it's a direct download or we try to reconstruct if we knew patterns
+    logWarn "Specific version lookup for Education Edition is limited. Attempting to use LATEST redirect."
+    DOWNLOAD_URL=$(curl "${debugCurlArgs[@]}" -sI https://aka.ms/downloadmee-linuxserver | grep -i location | awk '{print $2}' | tr -d '\r')
+    VERSION=$(extractVersionFromUrl "$DOWNLOAD_URL")
+  fi
 fi
 
 if [[ $VERSION = none ]]; then
-  SERVER=bedrock_server
+  SERVER=bedrock_server_edu
 else
-  SERVER="bedrock_server-${VERSION}"
+  SERVER="bedrock_server_edu-${VERSION}"
 fi
 
 if [[ ! -f "$SERVER" ]]; then
@@ -193,15 +173,15 @@ if [[ ! -f "$SERVER" ]]; then
   [[ $DOWNLOAD_DIR != /tmp ]] && mkdir -p "$DOWNLOAD_DIR"
   TMP_ZIP="$DOWNLOAD_DIR/$(basename "${DOWNLOAD_URL}")"
 
-  echo "Downloading Bedrock server version ${VERSION} ..."
-  if ! curl "${debugCurlArgs[@]}" -o "${TMP_ZIP}" -A "itzg/minecraft-bedrock-server" -fsSL "${DOWNLOAD_URL}"; then
+  echo "Downloading Minecraft Education server version ${VERSION} ..."
+  if ! curl "${debugCurlArgs[@]}" -o "${TMP_ZIP}" -A "itzg/minecraft-education-server" -fsSL "${DOWNLOAD_URL}"; then
     logError " failed to download from ${DOWNLOAD_URL}
           Double check that the given VERSION is valid"
     exit 2
   fi
 
   # remove only binaries and some docs, to allow for an upgrade of those
-  rm -rf -- bedrock_server bedrock_server-* *.so release-notes.txt bedrock_server_how_to.html valid_known_packs.json premium_cache 2> /dev/null
+  rm -rf -- bedrock_server_edu bedrock_server_edu-* *.so release-notes.txt bedrock_server_how_to.html valid_known_packs.json premium_cache 2> /dev/null
 
   bkupDir=backup-pre-${VERSION}
   # fixup any previous interrupted upgrades
@@ -245,8 +225,8 @@ if [[ ! -f "$SERVER" ]]; then
   unzip -q -n "${TMP_ZIP}"
   [[ $DOWNLOAD_DIR != /tmp ]] && rm -rf "$DOWNLOAD_DIR"
 
-  chmod +x bedrock_server
-  mv bedrock_server "$SERVER"
+  chmod +x bedrock_server_edu
+  mv bedrock_server_edu "$SERVER"
 fi
 
 if [[ -n "$OPS" || -n "$MEMBERS" || -n "$VISITORS" ]]; then
@@ -329,7 +309,14 @@ if isTrue "${ENABLE_SSH}"; then
   echo "password: \"${RCON_PASSWORD}\"" > "$HOME/.remote-console.yaml"
 fi
 
-echo "Starting Bedrock server..."
+echo "--------------------------------------------------------------------------------"
+echo "  MINECRAFT EDUCATION EDITION SIGN-IN REQUIRED"
+echo "  Please check the logs below for a 'Device Code' and visit:"
+echo "  https://microsoft.com/devicelogin"
+echo "  to authenticate as a school administrator."
+echo "--------------------------------------------------------------------------------"
+
+echo "Starting Minecraft Education server..."
 if [[ -f /usr/local/bin/box64 ]] && isTrue "${USE_BOX64}" ; then
     exec mc-server-runner "${mcServerRunnerArgs[@]}" box64 ./"$SERVER"
 else

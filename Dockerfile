@@ -53,12 +53,10 @@ COPY property-definitions.json /etc/bds-property-definitions.json
 COPY bin/* /usr/local/bin/
 
 # Available versions listed at
-# https://minecraft.wiki/w/Bedrock_Edition_1.11.0
-# https://minecraft.wiki/w/Bedrock_Edition_1.12.0
-# https://minecraft.wiki/w/Bedrock_Edition_1.13.0
-# https://minecraft.wiki/w/Bedrock_Edition_1.14.0
+# https://minecraft.wiki/w/Education_Edition_version_history
 ENV VERSION=LATEST \
-    SERVER_PORT=19132
+    SERVER_PORT=19132 \
+    EDITION=education
 
 HEALTHCHECK --start-period=1m CMD /usr/local/bin/mc-monitor status-bedrock --host 127.0.0.1 --port $SERVER_PORT
 
