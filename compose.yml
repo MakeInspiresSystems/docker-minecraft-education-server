@@ -1,0 +1,15 @@
+services:
+  server:
+    build:
+      context: .
+
+    restart: unless-stopped
+
+    ports:
+      - 19132:19132/udp
+
+    environment:
+      - EULA=TRUE
+
+    volumes:
+      - ./data:/data
