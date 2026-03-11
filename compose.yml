@@ -1,7 +1,6 @@
 services:
   server:
-    build:
-      context: .
+    image: makeinspires/minecraft-edu-server:latest
 
     restart: unless-stopped
 
