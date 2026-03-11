@@ -1,0 +1,24 @@
+app = 'minecraft-edu'
+primary_region = 'ewr'
+
+[build]
+  image = 'registry.fly.io/minecraft-edu:latest'
+
+[[compute]]
+  size = "shared-cpu-1x"
+  memory = "2gb"
+
+[env]
+  EULA = 'TRUE'
+
+[[services]]
+  internal_port = 19132
+  protocol = "udp"
+
+  [[services.ports]]
+    port = 19132
+
+[mounts]
+  source = "minecraft_edu_data"
+  destination = "/data"
+  processes= ["app"]
