@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
 
     ports:
-      - 19132:19132/udp
+      - ${MINECRAFT_PORT:-19132}:19132/udp
 
     environment:
       - EULA=TRUE
