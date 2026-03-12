@@ -1,14 +1,70 @@
 services:
-  server:
+  ues:
     image: makeinspires/minecraft-edu-server:latest
 
     restart: unless-stopped
 
     ports:
-      - ${MINECRAFT_PORT:-19132}:${MINECRAFT_PORT:-19132}/udp
+      - 19132:19132/udp
 
     environment:
       - EULA=TRUE
 
     volumes:
-      - ./data:/data
+      - ./ues-data:/data
+
+  mamaroneck:
+    image: makeinspires/minecraft-edu-server:latest
+
+    restart: unless-stopped
+
+    ports:
+      - 19133:19133/udp
+
+    environment:
+      - EULA=TRUE
+
+    volumes:
+      - ./mamaroneck-data:/data
+
+  brooklyn:
+    image: makeinspires/minecraft-edu-server:latest
+
+    restart: unless-stopped
+
+    ports:
+      - 19134:19134/udp
+
+    environment:
+      - EULA=TRUE
+
+    volumes:
+      - ./brooklyn-data:/data
+
+  darien:
+    image: makeinspires/minecraft-edu-server:latest
+
+    restart: unless-stopped
+
+    ports:
+      - 19135:19135/udp
+
+    environment:
+      - EULA=TRUE
+
+    volumes:
+      - ./darien-data:/data
+
+  chappaqua:
+    image: makeinspires/minecraft-edu-server:latest
+
+    restart: unless-stopped
+
+    ports:
+      - 19136:19136/udp
+
+    environment:
+      - EULA=TRUE
+
+    volumes:
+      - ./chappaqua-data:/data
