@@ -23,6 +23,7 @@ services:
 
     environment:
       - EULA=TRUE
+      - SERVER_PORT=19133
 
     volumes:
       - ./mamaroneck-data:/data
@@ -37,6 +38,7 @@ services:
 
     environment:
       - EULA=TRUE
+      - SERVER_PORT=19134
 
     volumes:
       - ./brooklyn-data:/data
@@ -51,6 +53,7 @@ services:
 
     environment:
       - EULA=TRUE
+      - SERVER_PORT=19135
 
     volumes:
       - ./darien-data:/data
@@ -65,6 +68,7 @@ services:
 
     environment:
       - EULA=TRUE
+      - SERVER_PORT=19136
 
     volumes:
       - ./chappaqua-data:/data
