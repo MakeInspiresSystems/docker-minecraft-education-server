@@ -55,8 +55,7 @@ COPY bin/* /usr/local/bin/
 # Available versions listed at
 # https://minecraft.wiki/w/Education_Edition_version_history
 ENV VERSION=LATEST \
-    SERVER_PORT=19132 \
-    EDITION=education
+  EDITION=education
 
 HEALTHCHECK --start-period=1m CMD /usr/local/bin/mc-monitor status-bedrock --host 127.0.0.1 --port $SERVER_PORT
 

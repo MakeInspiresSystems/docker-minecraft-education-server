@@ -9,6 +9,7 @@ services:
 
     environment:
       - EULA=TRUE
+      - SERVER_PORT=19132
 
     volumes:
       - ./ues-data:/data
