@@ -20,11 +20,11 @@ services:
     restart: unless-stopped
 
     ports:
-      - 19133:19133/udp
+      - 19137:19137/udp
 
     environment:
       - EULA=TRUE
-      - SERVER_PORT=19133
+      - SERVER_PORT=19137
 
     volumes:
       - ./mamaroneck-data:/data
